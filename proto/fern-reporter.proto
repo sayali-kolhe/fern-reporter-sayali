@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./;fernreporter_pb";
+
+package fernReporter;
+
+service FernReporterService {
+  rpc Ping(PingRequest) returns (PingResponse);
+
+  rpc GetTestRunAll(google.protobuf.Empty) returns (GetTestRunByIDResponse);
+  rpc GetTestRunByID(GetTestRunByIDRequest) returns (GetTestRunByIDResponse);
+
+//  rpc CreateTestRun (Request) returns (Response);
+//  rpc UpdateTestRun (Request) returns (Response);
+//  rpc DeleteTestRun (Request) returns (Response);
+//
+//  rpc GetProjectAll (Request) returns (Response);
+//  rpc GetTestSummary (Request) returns (Response);
+//
+//  rpc ReportTestRunAll (Request) returns (Response);
+//  rpc ReportTestRunByID (Request) returns (Response);
+//
+//  rpc ReportTestRunAllHTML (Request) returns (Response);
+//  rpc ReportTestRunByIDHTML (Request) returns (Response);
+//
+//  rpc ReportTestInsights (Request) returns (Response);
+  //  rpc ProcessTags (Request) returns (Response);
+}
+
+message PingRequest {
+  string message = 1;
+}
+
+message PingResponse {
+  string message = 1;
+}
+
+message GetTestRunByIDRequest {
+  uint64 id = 1;
+}
+
+message Tag {
+  uint64 id = 1;
+  string name = 2;
+}
+
+message SpecRun {
+  uint64 id = 1;
+  uint64 suiteId = 2;
+  string specDescription = 3;
+  string status = 4;
+  string message = 5;
+  repeated Tag tags = 6;
+  google.protobuf.Timestamp startTime = 7;
+  google.protobuf.Timestamp endTime = 8;
+
+}
+
+message SuiteRun {
+  uint64 id = 1;
+  uint64 testRunId = 2;
+  string suiteName = 3;
+  google.protobuf.Timestamp startTime = 4;
+  google.protobuf.Timestamp endTime = 5;
+  repeated SpecRun specRuns = 6;
+
+}
+
+message TestRun {
+  uint64 id = 1;
+  string testProjectName = 2;
+  uint64 testSeed = 3;
+  google.protobuf.Timestamp startTime = 4;
+  google.protobuf.Timestamp endTime = 5;
+  repeated SuiteRun suiteRuns = 6;
+
+}
+
+message GetTestRunByIDResponse {
+  TestRun test_run = 1;
+}
+
+message GetTestRunAllResponse {
+  repeated TestRun test_run = 1;
+}

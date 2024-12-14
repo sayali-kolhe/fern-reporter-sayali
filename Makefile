@@ -26,6 +26,15 @@ clean:
 	@GOBIN=$(GOBIN) go clean
 	@rm -f $(GOBIN)/$(BINARY_NAME)
 
+
+#Generate Go code from proto files
+proto-generate:
+	rm -rf ./fernreporter_pb
+	mkdir ./fernreporter_pb
+	protoc --go_out=./fernreporter_pb  \
+       --go-grpc_out=./fernreporter_pb  \
+       ./proto/fern-reporter.proto
+
 # Cross-compilation with gox
 cross-compile:
 	@echo "🛠️ Cross compiling for Linux and Mac..."
@@ -36,7 +45,7 @@ test:
 	@echo "🧪 Running Tests..."
 	@go test $(TEST_FLAGS) -coverprofile=profile.cov ./...
 
-docker-build: cross-compile
+docker-build: proto-generate cross-compile
 	@echo "🐳 Building Local Docker image..."
 	@docker build -t fern-app . -f Dockerfile-local
 
