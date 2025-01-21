@@ -36,7 +36,7 @@ proto-generate:
        ./proto/fern-reporter.proto
 
 # Cross-compilation with gox
-cross-compile:
+cross-compile: proto-generate
 	@echo "🛠️ Cross compiling for Linux and Mac..."
 	@gox -osarch="linux/amd64 darwin/amd64" -output "$(GOBIN)/$(BINARY_NAME)_{{.OS}}_{{.Arch}}" $(GOPKG)
 
@@ -45,7 +45,7 @@ test:
 	@echo "🧪 Running Tests..."
 	@go test $(TEST_FLAGS) -coverprofile=profile.cov ./...
 
-docker-build: proto-generate cross-compile
+docker-build: cross-compile
 	@echo "🐳 Building Local Docker image..."
 	@docker build -t fern-app . -f Dockerfile-local
 

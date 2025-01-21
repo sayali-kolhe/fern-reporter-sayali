@@ -2,12 +2,9 @@ package routers
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
-	"strconv"
 	"time"
-
-	"google.golang.org/grpc"
 
 	"github.com/guidewire/fern-reporter/config"
 	"github.com/guidewire/fern-reporter/fernreporter_pb"
@@ -26,14 +23,17 @@ func RegisterRouters(router *gin.Engine) {
 	handler := handlers.NewHandler(db.GetDb())
 
 	authEnabled := config.GetAuth().Enabled
-
-	conn, err := grpc.Dial("grpc-server:50051", grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
-	grpcClient := fernreporter_pb.NewFernReporterServiceClient(conn)
-
+	//
+	//fmt.Printf("In RegisterRouters before grpcClient.")
+	//
+	//conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
+	//if err != nil {
+	//	log.Fatalf("did not connect: %v", err)
+	//}
+	//defer conn.Close()
+	//grpcClient := fernreporter_pb.NewFernReporterServiceClient(conn)
+	//
+	//fmt.Printf("In RegisterRouters after grpcClient")
 	var api *gin.RouterGroup
 	if authEnabled {
 		api = router.Group("/api", auth.ScopeMiddleware())
@@ -82,9 +82,10 @@ func RegisterRouters(router *gin.Engine) {
 
 	ping.Use()
 	{
-		ping.GET("/", func(c *gin.Context) {
-			PingHandler(c, grpcClient)
-		})
+		ping.GET("/", handler.Ping)
+		//ping.GET("/", func(c *gin.Context) {
+		//	PingHandler(c, grpcClient)
+		//})
 	}
 	insights := router.Group("/insights")
 	{
@@ -98,36 +99,15 @@ func PingHandler(c *gin.Context, grpcClient fernreporter_pb.FernReporterServiceC
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
+	fmt.Printf("In PingHandler\n")
 	// Make the gRPC call
 	response, err := grpcClient.Ping(ctx, &fernreporter_pb.PingRequest{Message: "Ping"})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	fmt.Printf("response: %v\n", response)
+	fmt.Printf("response.Message: %v\n", response.Message)
 	// Respond to the HTTP request with the gRPC response
 	c.JSON(http.StatusOK, gin.H{"response": response.Message})
-}
-
-// GetTestRunByIDHandler handles HTTP requests and uses the gRPC client to make a gRPC call
-func GetTestRunByIDHandler(c *gin.Context, grpcClient fernreporter_pb.FernReporterServiceClient) {
-	// Create a new context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	// Make the gRPC call
-	testRunId, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	response, err := grpcClient.GetTestRunByID(ctx, &fernreporter_pb.GetTestRunByIDRequest{
-		Id: testRunId})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Respond to the HTTP request with the gRPC response
-	c.JSON(http.StatusOK, gin.H{"response": response.TestRun})
 }

@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   grpc-server:
+    container_name: grpc-server
     build:
       context: .
       dockerfile: Dockerfile.server
