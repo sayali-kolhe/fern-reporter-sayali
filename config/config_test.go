@@ -1,11 +1,13 @@
 package config_test
 
 import (
-	"github.com/guidewire/fern-reporter/config"
+	"os"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
-	"os"
+
+	"github.com/guidewire/fern-reporter/config"
 )
 
 // Mock the file reading function
@@ -28,6 +30,7 @@ var _ = Describe("When LoadConfig is invoked", func() {
 
 			Expect(appConfig.Auth.JSONWebKeysEndpoint).To(Equal(""))
 			Expect(appConfig.Server.Port).To(Equal(":8080"))
+			Expect(appConfig.Server.GrpcPort).To(Equal(":50051"))
 			Expect(appConfig.Db.Driver).To(Equal("postgres"))
 			Expect(appConfig.Db.Host).To(Equal("localhost"))
 			Expect(appConfig.Db.Port).To(Equal("5432"))

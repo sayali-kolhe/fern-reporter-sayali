@@ -10,12 +10,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/guidewire/fern-reporter/fernreporter_pb"
+	"github.com/guidewire/fern-reporter/pkg/api/handlers"
 	"github.com/guidewire/fern-reporter/pkg/graph/resolvers"
-	"github.com/guidewire/fern-reporter/pkg/models"
 	"github.com/guidewire/fern-reporter/pkg/utils"
 
 	"github.com/guidewire/fern-reporter/pkg/graph/generated"
@@ -35,10 +34,11 @@ import (
 //go:embed pkg/views/insights.html
 var testRunsTemplate embed.FS
 
-type server struct {
-	fernreporter_pb.UnimplementedFernReporterServiceServer
-	db *gorm.DB
-}
+//
+//type server struct {
+//	fernreporter_pb.UnimplementedFernReporterServiceServer
+//	db *gorm.DB
+//}
 
 func main() {
 	initConfig()
@@ -94,7 +94,7 @@ func initServer() {
 	router.GET("/", PlaygroundHandler("/query"))
 
 	// Run grpc server
-	go initGrpcServer()
+	go initGrpcServer(serverConfig.GrpcPort)
 
 	err = router.Run(serverConfig.Port)
 	if err != nil {
@@ -142,14 +142,13 @@ func configJWTMiddleware(router *gin.Engine) {
 	log.Println("JWT Middleware configured successfully.")
 }
 
-func initGrpcServer() {
-	grpcPort := ":50051" // Change as needed
+func initGrpcServer(grpcPort string) {
 	listener, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Fatalf("Failed to listen on gRPC port %s: %v", grpcPort, err)
 	}
 	grpcServer := grpc.NewServer()
-	fernreporter_pb.RegisterFernReporterServiceServer(grpcServer, &server{db: db.GetDb()})
+	fernreporter_pb.RegisterFernReporterServiceServer(grpcServer, handlers.NewGrpcHandler(db.GetDb()))
 	log.Printf("Starting gRPC server on port %s...", grpcPort)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("failed to serve gRPC server: %v", err)
@@ -157,34 +156,4 @@ func initGrpcServer() {
 
 	log.Println("This will never print unless the server shuts down.")
 
-}
-
-func (s *server) Ping(ctx context.Context, in *fernreporter_pb.PingRequest) (*fernreporter_pb.PingResponse, error) {
-	log.Printf("Received: %v", in.GetMessage())
-	return &fernreporter_pb.PingResponse{Message: "Pong: " + in.GetMessage()}, nil
-}
-
-func (s *server) GetTestRunByID(ctx context.Context, req *fernreporter_pb.GetTestRunByIDRequest) (*fernreporter_pb.GetTestRunByIDResponse, error) {
-	var testRun models.TestRun
-	log.Printf("Received GetTestRunByID request for id: %v", req.GetId())
-	id := req.GetId()
-	result := s.db.Where("id = ?", id).First(&testRun)
-	if result.Error != nil {
-		log.Printf("Error for GetTestRunByID request for id: %v, Err: %v", req.GetId(), result.Error.Error())
-		return nil, result.Error
-	}
-
-	response := &fernreporter_pb.GetTestRunByIDResponse{
-		TestRun: &fernreporter_pb.TestRun{
-			Id:              testRun.ID,
-			TestProjectName: testRun.TestProjectName,
-			TestSeed:        testRun.TestSeed,
-			StartTime:       timestamppb.New(testRun.StartTime),
-			EndTime:         timestamppb.New(testRun.EndTime),
-			//SuiteRuns: testRun.SuiteRuns,
-
-			// Add other fields here
-		},
-	}
-	return response, nil
 }

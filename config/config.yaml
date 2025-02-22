@@ -10,6 +10,7 @@ db:
   max-idle-conns: 10
 server:
   port: :8080
+  grpc-port: :50051
 auth:
   json-web-keys-endpoint: ""
   enabled: "false"

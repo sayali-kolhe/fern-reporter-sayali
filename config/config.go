@@ -30,7 +30,8 @@ type dbConfig struct {
 }
 
 type serverConfig struct {
-	Port string `mapstructure:"port"`
+	Port     string `mapstructure:"port"`
+	GrpcPort string `mapstructure:"grpc-port"`
 }
 
 type authConfig struct {
