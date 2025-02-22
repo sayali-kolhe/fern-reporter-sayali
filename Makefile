@@ -51,7 +51,7 @@ docker-build: cross-compile
 
 docker-run-local: docker-build
 	@echo "🏃 Running application in Docker..."
-	@docker run -it -p 8080:8080 fern-app
+	@docker run -it -p 8080:8080 -p 50051:50051 fern-app
 
 docker-build-multi-arch:
 	@echo "Building multi arch docker image and pushing..."

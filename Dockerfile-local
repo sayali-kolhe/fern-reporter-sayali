@@ -30,6 +30,8 @@ COPY ./bin/fern_linux_amd64 /usr/src/app/fern
 
 # Expose the port that your application uses
 EXPOSE 8080
+EXPOSE 50051
+
 RUN mkdir config
 RUN ls -l
 COPY ./config/config.yaml config/
