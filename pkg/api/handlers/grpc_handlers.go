@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
@@ -36,16 +37,82 @@ func (g *GrpcHandler) GetTestRunByID(ctx context.Context, req *fernreporter_pb.G
 	}
 
 	response := &fernreporter_pb.GetTestRunByIDResponse{
-		TestRun: &fernreporter_pb.TestRun{
-			Id:              testRun.ID,
-			TestProjectName: testRun.TestProjectName,
-			TestSeed:        testRun.TestSeed,
-			StartTime:       timestamppb.New(testRun.StartTime),
-			EndTime:         timestamppb.New(testRun.EndTime),
-			//SuiteRuns: testRun.SuiteRuns,
-
-			// Add other fields here
-		},
+		TestRun: convertTestRunToProto(testRun),
 	}
 	return response, nil
+}
+
+func (g *GrpcHandler) GetTestRunAll(ctx context.Context, empty *emptypb.Empty) (*fernreporter_pb.GetTestRunAllResponse, error) {
+	var testRuns []models.TestRun
+	g.db.Find(&testRuns)
+
+	var protoTestRuns []*fernreporter_pb.TestRun
+	for _, testRun := range testRuns {
+		protoTestRuns = append(protoTestRuns, convertTestRunToProto(testRun))
+	}
+	response := &fernreporter_pb.GetTestRunAllResponse{
+		TestRuns: protoTestRuns,
+	}
+
+	return response, nil
+}
+
+// Helper Functions:
+
+// Convert TestRun struct
+func convertTestRunToProto(testRun models.TestRun) *fernreporter_pb.TestRun {
+	return &fernreporter_pb.TestRun{
+		Id:              testRun.ID,
+		TestProjectName: testRun.TestProjectName,
+		TestSeed:        testRun.TestSeed,
+		StartTime:       timestamppb.New(testRun.StartTime),
+		EndTime:         timestamppb.New(testRun.EndTime),
+		SuiteRuns:       convertSuiteRunsToProto(testRun.SuiteRuns),
+	}
+}
+
+// Convert a slice of SuiteRun structs
+func convertSuiteRunsToProto(suiteRuns []models.SuiteRun) []*fernreporter_pb.SuiteRun {
+	var protoSuiteRuns []*fernreporter_pb.SuiteRun
+	for _, suiteRun := range suiteRuns {
+		protoSuiteRuns = append(protoSuiteRuns, &fernreporter_pb.SuiteRun{
+			Id:        suiteRun.ID,
+			TestRunId: suiteRun.TestRunID,
+			SuiteName: suiteRun.SuiteName,
+			StartTime: timestamppb.New(suiteRun.StartTime),
+			EndTime:   timestamppb.New(suiteRun.EndTime),
+			SpecRuns:  convertSpecRunsToProto(suiteRun.SpecRuns),
+		})
+	}
+	return protoSuiteRuns
+}
+
+// Convert a slice of SpecRun structs
+func convertSpecRunsToProto(specRuns []models.SpecRun) []*fernreporter_pb.SpecRun {
+	var protoSpecRuns []*fernreporter_pb.SpecRun
+	for _, specRun := range specRuns {
+		protoSpecRuns = append(protoSpecRuns, &fernreporter_pb.SpecRun{
+			Id:              specRun.ID,
+			SuiteId:         specRun.SuiteID,
+			SpecDescription: specRun.SpecDescription,
+			Status:          specRun.Status,
+			Message:         specRun.Message,
+			Tags:            convertTagsToProto(specRun.Tags),
+			StartTime:       timestamppb.New(specRun.StartTime),
+			EndTime:         timestamppb.New(specRun.EndTime),
+		})
+	}
+	return protoSpecRuns
+}
+
+// Convert a slice of Tag structs
+func convertTagsToProto(tags []models.Tag) []*fernreporter_pb.Tag {
+	var protoTags []*fernreporter_pb.Tag
+	for _, tag := range tags {
+		protoTags = append(protoTags, &fernreporter_pb.Tag{
+			Id:   tag.ID,
+			Name: tag.Name,
+		})
+	}
+	return protoTags
 }

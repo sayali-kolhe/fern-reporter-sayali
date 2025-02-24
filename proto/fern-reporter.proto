@@ -10,13 +10,13 @@ package fernReporter;
 service FernReporterService {
   rpc Ping(PingRequest) returns (PingResponse);
 
-  rpc GetTestRunAll(google.protobuf.Empty) returns (GetTestRunByIDResponse);
+  rpc GetTestRunAll(google.protobuf.Empty) returns (GetTestRunAllResponse);
   rpc GetTestRunByID(GetTestRunByIDRequest) returns (GetTestRunByIDResponse);
 
-//  rpc CreateTestRun (Request) returns (Response);
-//  rpc UpdateTestRun (Request) returns (Response);
-//  rpc DeleteTestRun (Request) returns (Response);
-//
+  rpc CreateTestRun(CreateTestRunRequest) returns (CreateTestRunResponse);
+  rpc UpdateTestRun(UpdateTestRunRequest) returns (UpdateTestRunResponse);
+  rpc DeleteTestRun (DeleteTestRunRequest) returns (DeleteTestRunResponse);
+
 //  rpc GetProjectAll (Request) returns (Response);
 //  rpc GetTestSummary (Request) returns (Response);
 //
@@ -28,18 +28,6 @@ service FernReporterService {
 //
 //  rpc ReportTestInsights (Request) returns (Response);
   //  rpc ProcessTags (Request) returns (Response);
-}
-
-message PingRequest {
-  string message = 1;
-}
-
-message PingResponse {
-  string message = 1;
-}
-
-message GetTestRunByIDRequest {
-  uint64 id = 1;
 }
 
 message Tag {
@@ -79,10 +67,46 @@ message TestRun {
 
 }
 
+message PingRequest {
+  string message = 1;
+}
+
+message PingResponse {
+  string message = 1;
+}
+
+message GetTestRunByIDRequest {
+  uint64 id = 1;
+}
+
 message GetTestRunByIDResponse {
   TestRun test_run = 1;
 }
 
 message GetTestRunAllResponse {
-  repeated TestRun test_run = 1;
+  repeated TestRun test_runs = 1;
+}
+
+message  CreateTestRunRequest {
+  TestRun test_run = 1;
+}
+
+message  CreateTestRunResponse {
+  TestRun test_run = 1;
+}
+
+message  UpdateTestRunRequest {
+  uint64 id = 1;
+}
+
+message  UpdateTestRunResponse {
+  TestRun test_run = 1;
+}
+
+message  DeleteTestRunRequest {
+  uint64 id = 1;
+}
+
+message  DeleteTestRunResponse {
+  TestRun test_run = 1;
 }
